@@ -1,2 +1,2 @@
-# CS577SemesterProject
-Predictive Modeling of Political Contributions
+# Semester_Project
+Semester Project for 577
