@@ -1,7 +1,7 @@
-
 # Virtual environments
 venv/
 env/
+*.env
 
 # IDE
 .vscode/
@@ -34,3 +34,5 @@ logs/
 # Large data files
 data/*.txt
 data/*.csv
+data/
+.env
