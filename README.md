@@ -33,7 +33,7 @@ Place FEC data files in `data/`:
 
 ## Usage
 
-**Import campaign data** (committees, candidates):
+**Import campaign data** (committees, candidates, links):
 
 python src/import_campaign_data.py
 
