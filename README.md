@@ -18,6 +18,10 @@ Analysis of Federal Election Commission (FEC) individual contribution data for C
    
    python src/setup_database.py
 
+   Read only or (select) Access to the DB
+   BAbramowitz
+   OELh9Jy903Rb
+
 ## Data Files
 
 **Download FEC data files from:** [Google Drive](https://drive.google.com/drive/u/2/folders/10v6GdV33jA6hiG1BwzqyzFupMZBinKe0)
@@ -28,6 +32,7 @@ Place downloaded files in `data/` directory:
 - `ccl.txt` - Candidate-committee linkages
 - `itcont*.txt` - Individual contribution files
 - more files to come
+
    
 **1. Initialize database**:
 
