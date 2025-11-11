@@ -2,10 +2,7 @@ import sys
 import os
 from pathlib import Path
 import time
-from dotenv import load_dotenv
-import pymysql
-
-load_dotenv()
+from db_utils import get_db_connection
 
 def import_committees(cursor, file_path):
     """Import committee master file"""
@@ -196,14 +193,7 @@ def main():
     print("CAMPAIGN FINANCE DATA IMPORT")
     print()
     
-    conn = pymysql.connect(
-        host=os.getenv('DB_HOST'),
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        port=int(os.getenv('DB_PORT', '3306')),
-        database=os.getenv('DB_NAME')
-    )
-    
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     data_dir = Path(__file__).parent.parent / 'data'

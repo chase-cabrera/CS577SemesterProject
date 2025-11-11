@@ -1,7 +1,8 @@
 import os
 import pymysql
-from dotenv import load_dotenv
 from pathlib import Path
+from db_utils import get_db_connection
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -35,9 +36,7 @@ def run_sql_file(cursor, filepath):
 def main():
     db_name = os.getenv('DB_NAME')
     
-    print("=" * 80)
     print("DATABASE SETUP (using .env credentials)")
-    print("=" * 80)
     print(f"Database: {db_name}")
     print()
     
@@ -68,7 +67,6 @@ def main():
         'init_raw_contributions.sql',
         'init_contributors.sql',
         'init_contributions.sql',
-        'init_contribution_totals.sql',
         'init_candidates.sql',
         'init_committees.sql',
         'init_candidate_committee_links.sql'
