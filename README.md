@@ -10,16 +10,13 @@ Analysis of Federal Election Commission (FEC) individual contribution data for C
    source venv/bin/activate
    pip install -r requirements.txt
    
-
 2. **Configure database:**
      
-    Use .env.example as a template
-     
+    Use .env.example as a template     
 
 3. **Initialize database:**
    
    python src/setup_database.py
-
 
 ## Data Files
 
@@ -30,22 +27,20 @@ Place FEC data files in `data/`:
 - `itcont*.txt` - Individual contribution files
 - more files to come
    
+**1. Initialize database**:
 
-## Usage
+python src/setup_database.py
 
-**Import campaign data** (committees, candidates, links):
+**2. Import campaign data** (committees, candidates, linkages):
 
 python src/import_campaign_data.py
 
+**3. Import raw contributions** (parses names on insert, marks status=. Needs to be processed, normalized, and have totals aggregated):
 
-**Process contributions**:
+python src/import_raw_contributions.py
 
-python src/parallel_processor.py --workers 4
+**4. Process raw contributions** (parallel, updates contributors + contributions tables, marks status=1):
 
-
-**Calculate totals:**
-
-python src/calculate_totals.py
-
+python src/process_raw_parallel.py --workers 8 --batch-size 1000
 
 
