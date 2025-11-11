@@ -20,7 +20,9 @@ Analysis of Federal Election Commission (FEC) individual contribution data for C
 
 ## Data Files
 
-Place FEC data files in `data/`:
+**Download FEC data files from:** [Google Drive](https://drive.google.com/drive/u/2/folders/10v6GdV33jA6hiG1BwzqyzFupMZBinKe0)
+
+Place downloaded files in `data/` directory:
 - `cn.txt` - Candidate master file
 - `cm.txt` - Committee master file  
 - `ccl.txt` - Candidate-committee linkages
@@ -43,4 +45,12 @@ python src/import_raw_contributions.py
 
 python src/process_raw_parallel.py --workers 8 --batch-size 1000
 
+This populates:
+- contributors (aggregated donor features for ML/EDA)
+- contributions (normalized transaction records for detailed analysis)
+
+
+**5. Exploratory Data Analysis (EDA)** - generates visualizations from contributors table:
+
+python src/eda_analysis.py
 
