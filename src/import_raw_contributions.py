@@ -2,8 +2,8 @@ import sys
 import os
 from pathlib import Path
 import time
-from name_parser import NameParser
 from db_utils import get_db_connection
+from name_parser import NameParser
 
 BATCH_SIZE = 5000  # Number of records to insert at once
 

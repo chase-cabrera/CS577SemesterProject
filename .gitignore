@@ -36,3 +36,4 @@ data/*.txt
 data/*.csv
 data/
 .env
+/models_backup_20251130

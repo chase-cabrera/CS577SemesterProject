@@ -35,28 +35,32 @@ def aggregate_worker(worker_id, start_id, end_id, batch_size, stop_flag, total_u
                 AVG(cont.transaction_amt) as avg_donation_amount,
                 COUNT(DISTINCT cont.cmte_id) as unique_committees,
                 
-                SUM(CASE WHEN ca.cand_pty_affiliation = 'DEM' THEN 1 ELSE 0 END) as dem_donations,
-                SUM(CASE WHEN ca.cand_pty_affiliation = 'DEM' THEN cont.transaction_amt ELSE 0 END) as dem_amount,
+                -- Recent activity (last 2 years)
+                SUM(CASE WHEN cont.transaction_dt >= DATE_SUB(CURDATE(), INTERVAL 2 YEAR) THEN 1 ELSE 0 END) as donations_last_2years,
+                SUM(CASE WHEN cont.transaction_dt >= DATE_SUB(CURDATE(), INTERVAL 2 YEAR) THEN cont.transaction_amt ELSE 0 END) as amount_last_2years,
                 
-                SUM(CASE WHEN ca.cand_pty_affiliation = 'REP' THEN 1 ELSE 0 END) as rep_donations,
-                SUM(CASE WHEN ca.cand_pty_affiliation = 'REP' THEN cont.transaction_amt ELSE 0 END) as rep_amount,
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) = 'DEM' THEN 1 ELSE 0 END) as dem_donations,
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) = 'DEM' THEN cont.transaction_amt ELSE 0 END) as dem_amount,
                 
-                SUM(CASE WHEN ca.cand_pty_affiliation IN ('LIB', 'LBL', 'LBU', 'LP', 'LPF') THEN 1 ELSE 0 END) as lib_donations,
-                SUM(CASE WHEN ca.cand_pty_affiliation IN ('LIB', 'LBL', 'LBU', 'LP', 'LPF') THEN cont.transaction_amt ELSE 0 END) as lib_amount,
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) = 'REP' THEN 1 ELSE 0 END) as rep_donations,
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) = 'REP' THEN cont.transaction_amt ELSE 0 END) as rep_amount,
                 
-                SUM(CASE WHEN ca.cand_pty_affiliation IN ('GRE', 'GRN', 'GLP', 'DGR') THEN 1 ELSE 0 END) as gre_donations,
-                SUM(CASE WHEN ca.cand_pty_affiliation IN ('GRE', 'GRN', 'GLP', 'DGR') THEN cont.transaction_amt ELSE 0 END) as gre_amount,
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) IN ('LIB', 'LBL', 'LBU', 'LP', 'LPF') THEN 1 ELSE 0 END) as lib_donations,
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) IN ('LIB', 'LBL', 'LBU', 'LP', 'LPF') THEN cont.transaction_amt ELSE 0 END) as lib_amount,
                 
-                SUM(CASE WHEN ca.cand_pty_affiliation IN ('IND', 'IDP', 'ICD') THEN 1 ELSE 0 END) as ind_donations,
-                SUM(CASE WHEN ca.cand_pty_affiliation IN ('IND', 'IDP', 'ICD') THEN cont.transaction_amt ELSE 0 END) as ind_amount,
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) IN ('GRE', 'GRN', 'GLP', 'DGR') THEN 1 ELSE 0 END) as gre_donations,
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) IN ('GRE', 'GRN', 'GLP', 'DGR') THEN cont.transaction_amt ELSE 0 END) as gre_amount,
                 
-                SUM(CASE WHEN ca.cand_pty_affiliation NOT IN ('DEM', 'REP', 'LIB', 'LBL', 'LBU', 'LP', 'LPF', 
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) IN ('IND', 'IDP', 'ICD') THEN 1 ELSE 0 END) as ind_donations,
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) IN ('IND', 'IDP', 'ICD') THEN cont.transaction_amt ELSE 0 END) as ind_amount,
+                
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) NOT IN ('DEM', 'REP', 'LIB', 'LBL', 'LBU', 'LP', 'LPF', 
                                                                 'GRE', 'GRN', 'GLP', 'DGR', 'IND', 'IDP', 'ICD')
-                              OR ca.cand_pty_affiliation IS NULL 
+                              OR COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) IS NULL 
                          THEN 1 ELSE 0 END) as other_donations,
-                SUM(CASE WHEN ca.cand_pty_affiliation NOT IN ('DEM', 'REP', 'LIB', 'LBL', 'LBU', 'LP', 'LPF',
+                SUM(CASE WHEN COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) NOT IN ('DEM', 'REP', 'LIB', 'LBL', 'LBU', 'LP', 'LPF',
                                                                 'GRE', 'GRN', 'GLP', 'DGR', 'IND', 'IDP', 'ICD')
-                              OR ca.cand_pty_affiliation IS NULL
+                              OR COALESCE(ca.cand_pty_affiliation, cm.cmte_pty_affiliation) IS NULL
                          THEN cont.transaction_amt ELSE 0 END) as other_amount
             FROM contributions cont
             LEFT JOIN committees cm ON cont.cmte_id = cm.cmte_id
@@ -74,6 +78,8 @@ def aggregate_worker(worker_id, start_id, end_id, batch_size, stop_flag, total_u
             c.avg_donation_amount = stats.avg_donation_amount,
             c.unique_committees = stats.unique_committees,
             c.recency_days = DATEDIFF(CURDATE(), stats.last_donation_date),
+            c.donations_last_2years = stats.donations_last_2years,
+            c.amount_last_2years = stats.amount_last_2years,
             c.dem_donations = stats.dem_donations,
             c.dem_amount = stats.dem_amount,
             c.rep_donations = stats.rep_donations,
@@ -89,8 +95,11 @@ def aggregate_worker(worker_id, start_id, end_id, batch_size, stop_flag, total_u
             c.dem_pct = ROUND(IFNULL(stats.dem_amount, 0) / NULLIF(stats.total_amount, 0) * 100, 2),
             c.rep_pct = ROUND(IFNULL(stats.rep_amount, 0) / NULLIF(stats.total_amount, 0) * 100, 2),
             c.primary_party = CASE 
-                WHEN stats.dem_amount > stats.rep_amount THEN 'DEM'
-                WHEN stats.rep_amount > stats.dem_amount THEN 'REP'
+                WHEN stats.dem_amount >= GREATEST(stats.rep_amount, stats.lib_amount, stats.gre_amount, stats.ind_amount, stats.other_amount) THEN 'DEM'
+                WHEN stats.rep_amount >= GREATEST(stats.dem_amount, stats.lib_amount, stats.gre_amount, stats.ind_amount, stats.other_amount) THEN 'REP'
+                WHEN stats.lib_amount >= GREATEST(stats.dem_amount, stats.rep_amount, stats.gre_amount, stats.ind_amount, stats.other_amount) THEN 'LIB'
+                WHEN stats.gre_amount >= GREATEST(stats.dem_amount, stats.rep_amount, stats.lib_amount, stats.ind_amount, stats.other_amount) THEN 'GRE'
+                WHEN stats.ind_amount >= GREATEST(stats.dem_amount, stats.rep_amount, stats.lib_amount, stats.gre_amount, stats.other_amount) THEN 'IND'
                 ELSE 'OTHER'
             END
     """
