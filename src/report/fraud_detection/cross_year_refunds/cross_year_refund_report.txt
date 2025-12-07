@@ -1,0 +1,49 @@
+================================================================================
+CROSS-YEAR REFUND ANALYSIS REPORT
+Donors who contributed in Year X and received refunds in Year X+1
+================================================================================
+Generated: 2025-12-07 09:33:51
+
+EXECUTIVE SUMMARY
+----------------------------------------
+Total Cross-Year Refund Patterns: 118,202
+Unique Contributors Affected: 104,105
+Unique Committees Involved: 2,482
+
+FINANCIAL SUMMARY
+----------------------------------------
+Total Amount Donated (Year X): $323,131,110.00
+Total Amount Refunded (Year X+1): $127,315,736.00
+Average Donation: $2,733.72
+Average Refund: $1,077.10
+Median Donation: $750.00
+Median Refund: $250.00
+
+REFUND CATEGORIES
+----------------------------------------
+Partial Refunds (<100%): 85,936
+Full Refunds (100%): 32,266
+Excess Refunds (>100%): 23,172
+Average Refund Percentage: 312.6%
+
+TIMING ANALYSIS
+----------------------------------------
+Average Days to Refund: 209
+Median Days to Refund: 192
+Refunds within 30 days: 9,565
+Refunds within 90 days: 31,548
+Refunds within 180 days: 55,563
+Refunds within 365 days: 100,947
+
+YEAR RANGE
+----------------------------------------
+Earliest Donation Year: 1979
+Latest Donation Year: 2024
+
+CONTEXT
+----------------------------------------
+Total Contributions in Database: 171,969,259
+Total Contribution Amount: $44,695,913,697.33
+Cross-Year Refunds as % of Total: 0.2848%
+
+================================================================================
