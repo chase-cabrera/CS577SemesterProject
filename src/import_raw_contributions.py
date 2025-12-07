@@ -5,10 +5,10 @@ import time
 from db_utils import get_db_connection
 from name_parser import NameParser
 
-BATCH_SIZE = 5000  # Number of records to insert at once
+BATCH_SIZE = 50000  # Number of records to insert at once
 
 
-def import_contributions_file(cursor, file_path, parser):
+def import_contributions_file(cursor, conn, file_path, parser):
     """Import contributions from a single itcont file"""
     print(f"\nImporting from {file_path.name}...")
     
@@ -25,9 +25,11 @@ def import_contributions_file(cursor, file_path, parser):
         )
     """
     
+    COMMIT_INTERVAL = 100000  # Commit every 100k records
     batch = []
     count = 0
     skipped = 0
+    last_commit = 0
     
     with open(file_path, 'r', encoding='latin-1') as f:
         for line in f:
@@ -115,12 +117,22 @@ def import_contributions_file(cursor, file_path, parser):
             if len(batch) >= BATCH_SIZE:
                 cursor.executemany(insert_query, batch)
                 count += len(batch)
-                print(f"  Imported {count:,} records...", end='\r')
                 batch = []
+                
+                # Commit periodically to avoid huge uncommitted transactions
+                if count - last_commit >= COMMIT_INTERVAL:
+                    conn.commit()
+                    last_commit = count
+                    print(f"  Imported and committed {count:,} records...")
+                else:
+                    print(f"  Imported {count:,} records...", end='\r')
     
     if batch:
         cursor.executemany(insert_query, batch)
         count += len(batch)
+    
+    # Final commit
+    conn.commit()
     
     print(f"  Imported {count:,} records from {file_path.name}")
     if skipped > 0:
@@ -174,8 +186,7 @@ def main():
     total_records = 0
     
     for file_path in itcont_files:
-        count = import_contributions_file(cursor, file_path, parser)
-        conn.commit()
+        count = import_contributions_file(cursor, conn, file_path, parser)
     
     
     print("IMPORT COMPLETE")

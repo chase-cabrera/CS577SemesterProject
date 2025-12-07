@@ -17,7 +17,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BATCH_SIZE = 50000
+BATCH_SIZE = 2000000
 
 
 def build_donor_key():
@@ -34,8 +34,8 @@ def build_donor_key():
     """
 
 
-def insert_contributors(cursor, source_file=None):
-    """Insert unique donors from raw data."""
+def insert_contributors(cursor, conn, source_file=None):
+    """Insert unique donors from raw data in batches."""
     where_clause = "WHERE status = 0"
     params = []
     
@@ -43,21 +43,47 @@ def insert_contributors(cursor, source_file=None):
         where_clause += " AND source_file = %s"
         params.append(source_file)
     
-    query = f"""
-        INSERT IGNORE INTO contributors (
-            donor_key, first_name, last_name, middle_name, name_suffix,
-            city, state, zip_code, employer, occupation
-        )
-        SELECT DISTINCT
-            {build_donor_key()} as donor_key,
-            first_name, last_name, middle_name, name_suffix,
-            city, state, zip_code, employer, occupation
-        FROM raw_contributions
-        {where_clause}
-    """
+    # Get ID range
+    cursor.execute(f"SELECT MIN(id), MAX(id) FROM raw_contributions {where_clause}",
+                   params if params else None)
+    min_id, max_id = cursor.fetchone()
     
-    cursor.execute(query, params if params else None)
-    return cursor.rowcount
+    if min_id is None:
+        return 0
+    
+    total_inserted = 0
+    current_id = min_id
+    
+    while current_id <= max_id:
+        batch_end = current_id + BATCH_SIZE
+        batch_where = f"WHERE status = 0 AND id >= {current_id} AND id < {batch_end}"
+        if source_file:
+            batch_where += f" AND source_file = %s"
+        
+        query = f"""
+            INSERT IGNORE INTO contributors (
+                donor_key, first_name, last_name, middle_name, name_suffix,
+                city, state, zip_code, employer, occupation
+            )
+            SELECT DISTINCT
+                {build_donor_key()} as donor_key,
+                first_name, last_name, middle_name, name_suffix,
+                city, state, zip_code, employer, occupation
+            FROM raw_contributions
+            {batch_where}
+        """
+        
+        cursor.execute(query, (source_file,) if source_file else None)
+        batch_inserted = cursor.rowcount
+        total_inserted += batch_inserted
+        conn.commit()
+        
+        if batch_inserted > 0:
+            logger.info(f"Inserted {batch_inserted:,} contributors (total: {total_inserted:,})")
+        
+        current_id = batch_end
+    
+    return total_inserted
 
 
 def insert_contributions(cursor, conn, source_file=None):
@@ -122,7 +148,7 @@ def insert_contributions(cursor, conn, source_file=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--source-file', type=str)
-    parser.add_argument('--batch-size', type=int, default=50000)
+    parser.add_argument('--batch-size', type=int, default=2000000)
     args = parser.parse_args()
     
     global BATCH_SIZE
@@ -141,8 +167,7 @@ def main():
     start_time = time.time()
     
     logger.info("Inserting contributors...")
-    num_contributors = insert_contributors(cursor, args.source_file)
-    conn.commit()
+    num_contributors = insert_contributors(cursor, conn, args.source_file)
     logger.info(f"Contributors: {num_contributors:,}")
     
     logger.info("Inserting contributions...")
