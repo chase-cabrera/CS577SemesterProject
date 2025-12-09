@@ -519,6 +519,94 @@ def create_party_by_state():
     plt.close()
 
 
+def create_transactions_by_year():
+    """Create histogram of donations and refunds by year."""
+    
+    query = """
+    SELECT 
+        YEAR(transaction_dt) as year,
+        SUM(CASE WHEN transaction_amt > 0 THEN 1 ELSE 0 END) as num_donations,
+        SUM(CASE WHEN transaction_amt < 0 THEN 1 ELSE 0 END) as num_refunds,
+        SUM(CASE WHEN transaction_amt > 0 THEN transaction_amt ELSE 0 END) as total_donations,
+        SUM(CASE WHEN transaction_amt < 0 THEN ABS(transaction_amt) ELSE 0 END) as total_refunds
+    FROM contributions
+    WHERE transaction_dt IS NOT NULL
+      AND YEAR(transaction_dt) BETWEEN 1980 AND 2025
+    GROUP BY YEAR(transaction_dt)
+    ORDER BY year
+    """
+    
+    df = pd.DataFrame(execute_query(query))
+    for col in df.columns:
+        df[col] = pd.to_numeric(df[col])
+    
+    # Filter out years with very few transactions (likely data quality issues)
+    df = df[df['num_donations'] > 100]
+    
+    fig, axes = plt.subplots(3, 2, figsize=(18, 16))
+    min_year = int(df['year'].min())
+    max_year = int(df['year'].max())
+    fig.suptitle(f'Donation & Refund Transactions by Year ({min_year}-{max_year})', fontsize=16, fontweight='bold')
+    
+    # Row 1: Transaction COUNTS
+    # Number of donations per year (count)
+    axes[0, 0].bar(df['year'], df['num_donations'] / 1e6, color='forestgreen', edgecolor='black', alpha=0.8)
+    axes[0, 0].set_xlabel('Year')
+    axes[0, 0].set_ylabel('Number of Donations (millions)')
+    axes[0, 0].set_title('Donation Transactions per Year (Count)', fontweight='bold')
+    axes[0, 0].grid(True, alpha=0.3, axis='y')
+    
+    # Number of refunds per year (count)
+    axes[0, 1].bar(df['year'], df['num_refunds'] / 1e3, color='crimson', edgecolor='black', alpha=0.8)
+    axes[0, 1].set_xlabel('Year')
+    axes[0, 1].set_ylabel('Number of Refunds (thousands)')
+    axes[0, 1].set_title('Refund Transactions per Year (Count)', fontweight='bold')
+    axes[0, 1].grid(True, alpha=0.3, axis='y')
+    
+    # Row 2: Dollar AMOUNTS
+    # Total amount donated per year
+    axes[1, 0].bar(df['year'], df['total_donations'] / 1e9, color='steelblue', edgecolor='black', alpha=0.8)
+    axes[1, 0].set_xlabel('Year')
+    axes[1, 0].set_ylabel('Amount Raised (billions $)')
+    axes[1, 0].set_title('Total Amount Raised per Year', fontweight='bold')
+    axes[1, 0].grid(True, alpha=0.3, axis='y')
+    
+    # Total amount refunded per year
+    axes[1, 1].bar(df['year'], df['total_refunds'] / 1e6, color='darkorange', edgecolor='black', alpha=0.8)
+    axes[1, 1].set_xlabel('Year')
+    axes[1, 1].set_ylabel('Amount Refunded (millions $)')
+    axes[1, 1].set_title('Total Amount Refunded per Year', fontweight='bold')
+    axes[1, 1].grid(True, alpha=0.3, axis='y')
+    
+    # Row 3: Comparisons
+    # Side-by-side: both in millions for same scale comparison
+    years = df['year'].values
+    width = 0.35
+    
+    axes[2, 0].bar(years - width/2, df['num_donations'] / 1e6, width, label='Donations', color='forestgreen', edgecolor='black', alpha=0.8)
+    axes[2, 0].bar(years + width/2, df['num_refunds'] / 1e6, width, label='Refunds', color='crimson', edgecolor='black', alpha=0.8)
+    axes[2, 0].set_xlabel('Year')
+    axes[2, 0].set_ylabel('Transactions (millions)')
+    axes[2, 0].set_title('Transaction Counts: Donations vs Refunds', fontweight='bold')
+    axes[2, 0].legend()
+    axes[2, 0].grid(True, alpha=0.3, axis='y')
+    
+    # Refund rate (% of transactions that are refunds)
+    df['refund_rate'] = df['num_refunds'] / (df['num_donations'] + df['num_refunds']) * 100
+    df['refund_amount_rate'] = df['total_refunds'] / (df['total_donations'] + df['total_refunds']) * 100
+    axes[2, 1].bar(years - width/2, df['refund_rate'], width, label='By Count', color='purple', edgecolor='black', alpha=0.8)
+    axes[2, 1].bar(years + width/2, df['refund_amount_rate'], width, label='By Amount', color='teal', edgecolor='black', alpha=0.8)
+    axes[2, 1].set_xlabel('Year')
+    axes[2, 1].set_ylabel('Refund Rate (%)')
+    axes[2, 1].set_title('Refund Rate by Year (Count vs Amount)', fontweight='bold')
+    axes[2, 1].legend()
+    axes[2, 1].grid(True, alpha=0.3, axis='y')
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, 'transactions_by_year.png'), dpi=300, bbox_inches='tight')
+    plt.close()
+
+
 def create_donor_retention():
     """Create donor retention analysis."""
     print("Creating donor retention analysis...")
@@ -804,10 +892,9 @@ def main():
     create_donor_size_segments()
     create_party_by_state()
     create_donor_retention()
+    create_transactions_by_year()
     
-    print("\n" + "=" * 60)
     print(f"EDA COMPLETE! All visualizations saved to: {OUTPUT_DIR}/")
-    print("=" * 60)
 
 
 if __name__ == "__main__":
