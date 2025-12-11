@@ -246,7 +246,7 @@ def train_svm(X_train, y_train, X_val, y_val):
         gamma='scale',
         class_weight='balanced',
         probability=True,
-        random_state=42
+        random_state=69
     )
     
     model.fit(X_train, y_train)
