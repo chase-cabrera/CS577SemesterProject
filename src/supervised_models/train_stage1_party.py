@@ -422,10 +422,10 @@ def train_all_models(include_history=True):
     
     # Select best model
     best_model_type = comparison_df.iloc[0]['model_name']
-    if 'Logistic' in best_model_type:
+    if 'Logistic Regression' in best_model_type:
         best_model = all_models['logistic_regression']
         best_key = 'logistic_regression'
-    elif 'Random' in best_model_type:
+    elif 'Random Forest' in best_model_type:
         best_model = all_models['random_forest']
         best_key = 'random_forest'
     elif 'Support Vector Machine' in best_model_type:
