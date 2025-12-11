@@ -22,9 +22,9 @@ Analysis of Federal Election Commission (FEC) individual contribution data for C
 
    Read only or (select) Access to the DB
 
-   username: BAbramowitz
+   username: cs577
 
-   password: OELh9Jy903Rb
+   password: cs577
 
 ## Data Files
 
@@ -65,6 +65,10 @@ python src/eda_analysis.py
 
 **6. Run ML models**
 
+Data Preparation
+
+python src/prepare_training_data.py
+
 Supervised Models
 
 python src/supervised_models/train_stage1_party.py
@@ -80,3 +84,7 @@ python src/clustering_models/build_knn_index.py
 python src/clustering_models/train_kmeans_clusters.py
 
 python src/clustering_models/profile_clusters.py
+
+**7. Evaluation**
+
+python src/model_comparison.py
