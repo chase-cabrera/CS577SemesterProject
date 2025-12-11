@@ -7,6 +7,7 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 from sklearn.metrics import (accuracy_score, precision_recall_fscore_support, 
                              confusion_matrix, classification_report, roc_auc_score)
 import pickle
@@ -227,6 +228,62 @@ def train_gradient_boosting(X_train, y_train, X_val, y_val):
     
     return model, metrics
 
+def train_svm(X_train, y_train, X_val, y_val):
+    """
+    Train SVM model (RBF kernel)
+    
+    Returns:
+        Trained model and metrics
+    """
+    print("\nTraining SVM (RBF kernel)")
+    
+    start_time = time.time()
+    
+    # RBF SVM with balanced class weights and probability for ROC-AUC
+    model = SVC(
+        kernel='rbf', # RBF kernel
+        C=1.0,
+        gamma='scale',
+        class_weight='balanced',
+        probability=True,
+        random_state=42
+    )
+    
+    model.fit(X_train, y_train)
+    
+    train_time = time.time() - start_time
+    
+    # Evaluate
+    y_train_pred = model.predict(X_train)
+    y_val_pred = model.predict(X_val)
+    
+    train_acc = accuracy_score(y_train, y_train_pred)
+    val_acc = accuracy_score(y_val, y_val_pred)
+    
+    print(f"Training time: {train_time:.2f}s")
+    print(f"Train accuracy: {train_acc:.4f}")
+    print(f"Validation accuracy: {val_acc:.4f}")
+    
+    # Detailed metrics
+    precision, recall, f1, support = precision_recall_fscore_support(
+        y_val, y_val_pred, average='weighted'
+    )
+    
+    print(f"Validation F1 (weighted): {f1:.4f}")
+    print(f"Validation Precision (weighted): {precision:.4f}")
+    print(f"Validation Recall (weighted): {recall:.4f}")
+    
+    metrics = {
+        'model_name': 'Support Vector Machine',
+        'train_accuracy': train_acc,
+        'val_accuracy': val_acc,
+        'val_f1_weighted': f1,
+        'val_precision_weighted': precision,
+        'val_recall_weighted': recall,
+        'train_time': train_time
+    }
+    
+    return model, metrics
 
 def print_detailed_evaluation(model, X_val, y_val, model_name):
     """
@@ -352,6 +409,13 @@ def train_all_models(include_history=True):
     except Exception as e:
         print(f"\nGradient Boosting skipped: {str(e)[:100]}")
         print("Continuing with Logistic Regression and Random Forest models...")
+
+    # 4. SVM
+    svm_model, svm_metrics = train_svm(X_train, y_train, X_val, y_val)
+    svm_metrics['model_key'] = 'support_vector_machine'
+    all_models['support_vector_machine'] = svm_model
+    all_metrics.append(svm_metrics)
+    print_detailed_evaluation(svm_model, X_val, y_val, "Support Vector Machine")
     
     # Compare models
     comparison_df = compare_models(all_metrics)
@@ -364,6 +428,9 @@ def train_all_models(include_history=True):
     elif 'Random' in best_model_type:
         best_model = all_models['random_forest']
         best_key = 'random_forest'
+    elif 'Support Vector Machine' in best_model_type:
+        best_model = all_models['support_vector_machine']
+        best_key = 'support_vector_machine'
     elif 'gradient_boosting' in all_models:
         best_model = all_models['gradient_boosting']
         best_key = 'gradient_boosting'
