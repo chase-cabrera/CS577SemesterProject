@@ -7,7 +7,9 @@ Analysis of Federal Election Commission (FEC) individual contribution data for C
 1. **Create virtual environment and install dependencies:**
    
    python3 -m venv venv
+
    source venv/bin/activate
+
    pip install -r requirements.txt
    
 2. **Configure database:**
@@ -19,8 +21,10 @@ Analysis of Federal Election Commission (FEC) individual contribution data for C
    python src/setup_database.py
 
    Read only or (select) Access to the DB
-   BAbramowitz
-   OELh9Jy903Rb
+
+   username: BAbramowitz
+
+   password: OELh9Jy903Rb
 
 ## Data Files
 
@@ -42,11 +46,11 @@ python src/setup_database.py
 
 python src/import_campaign_data.py
 
-**3. Import raw contributions** (parses names on insert, marks status=. Needs to be processed, normalized, and have totals aggregated):
+**3. Import raw contributions (Optional: entries are already in database)** (parses names on insert, marks status=. Needs to be processed, normalized, and have totals aggregated):
 
 python src/import_raw_contributions.py
 
-**4. Process raw contributions** (parallel, updates contributors + contributions tables, marks status=1):
+**4. Process raw contributions (Optional: entries are already in database)** (parallel, updates contributors + contributions tables, marks status=1):
 
 python src/process_raw_parallel.py --workers 8 --batch-size 1000
 
@@ -59,3 +63,20 @@ This populates:
 
 python src/eda_analysis.py
 
+**6. Run ML models**
+
+Supervised Models
+
+python src/supervised_models/train_stage1_party.py
+
+python src/supervised_models/train_stage2_party.py
+
+python src/supervised_models/train_donation_likelihood.py
+
+Clustering Models
+
+python src/clustering_models/build_knn_index.py
+
+python src/clustering_models/train_kmeans_clusters.py
+
+python src/clustering_models/profile_clusters.py
